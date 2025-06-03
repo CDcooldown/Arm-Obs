@@ -1,9 +1,12 @@
+from time import sleep
 import numpy as np
 from roboticstoolbox import DHRobot, RevoluteDH
 from spatialmath import SE3
-from arm import *
+from arm_real import *
 from collision import *
 import matplotlib.pyplot as plt
+# from control_utils import *
+from control_utils.robot_control import *
 
 class Node:
     def __init__(self, state, parent=None):
@@ -11,7 +14,7 @@ class Node:
         self.parent = parent
 
 class RRT:
-    def __init__(self, start, goal, sampling_bounds, max_iter=1000, step_size=0.1, goal_sample_rate=0.05):
+    def __init__(self, start, goal, sampling_bounds, max_iter=1000, step_size=0.1, goal_sample_rate=0.20):
         self.start = Node(start)
         self.goal = Node(goal)
         self.sampling_bounds = [(-np.pi, np.pi)] * 6
@@ -62,18 +65,20 @@ class RRT:
         print(node.state)
         print(self.goal.state)
         return np.linalg.norm(node.state - self.goal.state) < threshold
-    
-    # def reached_goal(self, node, threshold=0.001):
-    #     diff = np.abs(node.state - self.goal.state)
-    #     print("Current state:", node.state)
-    #     print("Goal state:", self.goal.state)
-    #     print("Difference:", diff)
-    #     return np.all(diff < threshold)
 
     def is_in_collision(self, from_state, to_state):
-        cylinder1 = get_cylinder1(to_state)
-        box1 = Box([0.15, -0.30, 0.25], [0.1, 0.1, 0.3])
-        return check_collision(cylinder1, box1)
+        # cylinder1 = get_cylinder1(to_state)
+        cylinders = get_cylinders(to_state)
+        # box1 = Box([0.596, -0.109, 0.176], [0.094, 0.218, 0.408])
+        # box1 = Box([0.596, -0.109, 0.176], [0.094, 0.218, 0.408])
+        box2 = Box([-0.04, -0.10, 0.173], [0.060, 0.100, 0.345])
+        # box2 = Box([-0.014, -0.179, 0.146], [0.170, 0.099, 0.352])
+        boxes = [box2]
+        for cylinder in cylinders:
+            for box in boxes:
+                if check_collision(cylinder, box):
+                    return True
+        return False
 
 
     def get_path(self, node):
@@ -185,19 +190,34 @@ def visualize_rrt(rrt, interval=50):
 # 使用示例
 if __name__ == '__main__':
     # 你的原始设置
-    start = [0, 0, 0, 0, 0, 0]
-    goal = [1.57, 1.0, 0.8, -0.2, -1.57, 0]
+        # joint_angles = [[-90, -90, 0, -86.482, 0, 200.201],
+        #             [-98.115, -30.464, -25.248, -38.886, -90.727, 108.630],
+        #             [0.000, -24.550, 1.211, -68.514, -92.894, 200.190]]
+    start = [-90, -90, 0, -86.482, 0, 19.306]
+    goal = [-98.115, -30.464, -25.248, -38.886, -90.727, 108.630]
+    goal = [-33.355, -35.976, -55.926, -91.715, 2.628, 19.330]
+    start = [angle * np.pi / 180 for angle in start]
+    goal = [angle * np.pi / 180 for angle in goal]
+
     bounds = [(-np.pi, np.pi)] * 6
     
     # 创建RRT实例
-    rrt = RRT(start=start, goal=goal, sampling_bounds=bounds, max_iter=400, step_size=0.1)
+    rrt = RRT(start=start, goal=goal, sampling_bounds=bounds, max_iter=1000, step_size=0.1)
     
     # 运行带可视化的规划
     path = visualize_rrt(rrt)
+
+    robot_arm = robot()
+
     
     print("Found path with", len(path), "steps:")
     for i, state in enumerate(path):
         print(f"Step {i}: {state}")
+        angles = path[i]
+        angles = [angle * 180 / np.pi for angle in angles]
+
+        robot_arm.set_angles(angles)
+        sleep(1)
 
 
 # def main():
