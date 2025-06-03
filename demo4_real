@@ -1,0 +1,77 @@
+import numpy as np
+from roboticstoolbox import DHRobot, RevoluteDH
+from spatialmath import SE3
+
+def ur3_fk(joint_angles):
+    """
+    Compute UR3 forward kinematics using modified DH parameters.
+    :param joint_angles: List or array of 6 joint angles (in radians)
+    :return: position (x, y, z) and orientation (alpha, beta, gamma) in radians, ZYX Euler
+    """
+
+    L1 = RevoluteDH(d=0.1110,   a=0,        alpha=np.pi/2, offset=np.pi, modified=True)
+    L2 = RevoluteDH(d=0,        a=-0.264,   alpha=0,       offset=0, modified=True)
+    L3 = RevoluteDH(d=0,        a=-0.236,   alpha=0,       offset=0, modified=True)
+    L4 = RevoluteDH(d=0.1138,   a=0,        alpha=np.pi/2, offset=0, modified=True)
+    L5 = RevoluteDH(d=0.1018,   a=0,        alpha=-np.pi/2,offset=0, modified=True)
+    L6 = RevoluteDH(d=0.090238,  a=0,        alpha=0,      offset=0, modified=True)
+
+
+
+    # Create robot model
+    ur3 = DHRobot([L1, L2, L3, L4, L5, L6], name='UR3')
+    ur3_link2 = DHRobot([L1, L2], name='UR3_Link2')
+    ur3_link1 = DHRobot([L1], name='UR3_Link1')
+
+
+    # Compute FK
+    T = ur3.fkine(joint_angles)  # T is SE3 object
+    # T = ur3_link1.fkine(joint_angles)  # T is SE3 object
+
+    x_axis = T.R[:, 0]
+    y_axis = T.R[:, 1]
+    z_axis = T.R[:, 2]
+
+    # Extract position
+    pos = T.t  # numpy array of [x, y, z]
+
+    # Extract orientation as ZYX Euler angles (gamma, beta, alpha)
+    eul = T.rpy(order='xyz', unit='rad')  # returns [gamma, beta, alpha]    
+
+    return pos, eul, x_axis, y_axis, z_axis
+
+if __name__ == '__main__':
+    # Example joint angles in radians
+    # q = [1.57, 0.7, 0, 0, 0, 0]
+    # q = [0, -np.pi/4, np.pi/2, 0, np.pi/4, 0]
+    # q = [0, -np.pi/4, np.pi/2, 0.3, np.pi/3, 0.3]
+    # q = [0, 0, 0, 0, 0, 0] 
+    
+    # q = [-78.65, -59.74, 27, -54.43, -90, 121.99]
+    # q = [-73.677, -49.730, 9.516, -46.988, -89.672, 126.964]
+    # q = [-87.624, -68.733, 41.559, -60.031, -90.356, 113.033] #9.2
+    # q = [-87.624, -72.135, 54.366, -69.843, -65.042, 113.389] #9.2
+    # q = [-87.624, -72.135, 54.366, -69.843, -90.433, 113.389] #9.2
+    # q = [51.970, -56.420, -22.647, -29.195, -95.229, -156.482]
+    q = [53.856, -55.162, -30.889, -105.960, -90.846, -156.482]
+    q = [27.837, -115.501, 35.186, -110.974, -71.180, -233.590]
+
+    # q = [53.856]
+    q = [angle * np.pi / 180 for angle in q]
+
+    pos, eul_0, x, y, z = ur3_fk(q)
+
+    eul = eul_0 * 180 / np.pi
+
+    
+    # pos2 = pos + 0.1138 * z 
+    # print("pos2", pos2)
+    # pos3 = pos2 + 0.264 * x
+    # print("pos3", pos3)
+
+    print('End-effector pose from FK:')
+    print(f'Position: x={pos[0]:.4f}, y={pos[1]:.4f}, z={pos[2]:.4f}')
+    print(f'Orientation (ZYX Euler): alpha={eul[2]:.4f}, beta={eul[1]:.4f}, gamma={eul[0]:.4f}')
+    print("End-effector x-axis direction vector:", x)
+    print("End-effector y-axis direction vector:", y)
+    print("End-effector z-axis direction vector:", z)
