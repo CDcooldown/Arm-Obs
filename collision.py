@@ -1,5 +1,6 @@
 import numpy as np
 from itertools import product
+from arm_real import *
 
 # -----------------------------
 # Geometry Classes
@@ -133,3 +134,28 @@ def point_to_segment_distance(p, a, b):
     t = np.clip(t, 0, 1)
     projection = a + t * ab
     return np.linalg.norm(p - projection)
+
+def is_in_collision(to_state):
+    cylinders = get_cylinders(to_state)
+    # box1 = Box([0.60, -0.08, 0.20], [0.205, 0.08, 0.41])
+    # box1 = Box([0.60, -0.08, 0.10], [0.205, 0.08, 0.21])
+    box1 = Box([0.20, -0.32, 0.165], [0.075, 0.15, 0.355])
+
+    box2 = Box([-0.04, -0.10, 0.170], [0.060, 0.100, 0.340])
+    boxes = [box1]
+    i = 0
+    j = 0
+    for cylinder in cylinders:
+        for box in boxes:
+            if check_collision(cylinder, box):
+                print("i = ", i, "j = ", j)
+                return True
+            i += 1
+            j += 1
+    return False
+
+if __name__ == '__main__':
+    state = [-94.773, -38.358, 27.718, -81.775, -90.109, 109.984]
+    state = [angle * np.pi / 180 for angle in state]
+    result = is_in_collision(state)
+    print(result)

@@ -2,7 +2,7 @@ import numpy as np
 from roboticstoolbox import DHRobot, RevoluteDH
 from spatialmath import SE3   
 import matplotlib.pyplot as plt
-from plot import plot_cylinder 
+from plot import *
 
 # Define the modified DH parameters
 
@@ -35,7 +35,19 @@ class Cylinder:
 
         self.r = float(r)
 
+class Box:
+    def __init__(self, center, size):
+        """
+        center: np.array([x, y, z]) — center of the box
+        size: np.array([sx, sy, sz]) — dimensions of the box
+        """
+        self.center = np.array(center, dtype=float)
+        self.size = np.array(size, dtype=float)
 
+    def bounds(self):
+        half = self.size / 2
+        return self.center - half, self.center + half
+    
 def get_cylinder1(joint_angles):
     angles = joint_angles[:1]
     # Compute FK
@@ -192,7 +204,7 @@ def get_cylinder7(joint_angles):
     pos = T.t  # numpy array of [x, y, z]
     pos1 = pos - 0.05 * z_axis
 
-    pos2 = pos + 0.1138 * z_axis
+    pos2 = pos + 0.1838 * z_axis
 
     # print("Cyl7_pos1", pos1)
 
@@ -203,12 +215,40 @@ def get_cylinder7(joint_angles):
 def get_cylinders(joint_angles):
     return [
         # get_cylinder1(joint_angles),
-        get_cylinder2(joint_angles),
+        # get_cylinder2(joint_angles),
         get_cylinder3(joint_angles),
-        # get_cylinder4(joint_angles),
-        # get_cylinder5(joint_angles),
-        # get_cylinder6(joint_angles),
+        get_cylinder4(joint_angles),
+        get_cylinder5(joint_angles),
+        get_cylinder6(joint_angles),
+        get_cylinder7(joint_angles)
     ]
+
+def plot_cylinders_and_boxes(joint_angles, boxes):
+    cylinder0 = Cylinder([0, 0, 0], [0, 0, 0.2], 0.05)
+    cylinder1 = get_cylinder1(joint_angles)
+    cylinder2 = get_cylinder2(joint_angles)
+    cylinder3 = get_cylinder3(joint_angles)
+    cylinder4 = get_cylinder4(joint_angles)
+    cylinder5 = get_cylinder5(joint_angles)
+    cylinder6 = get_cylinder6(joint_angles)
+    cylinder7 = get_cylinder7(joint_angles)
+
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    plot_cylinder(ax, cylinder0)
+    plot_cylinder(ax, cylinder1)
+    plot_cylinder(ax, cylinder2)
+    plot_cylinder(ax, cylinder3)
+    plot_cylinder(ax, cylinder4)
+    plot_cylinder(ax, cylinder5)
+    plot_cylinder(ax, cylinder6)
+    plot_cylinder(ax, cylinder7)
+    for box in boxes:
+        plot_box(ax, box)
+    
+    # plot_cylinder(ax, [0.00823718, 0.19858176, 0.31871104],  [-0.09051886,  0.06896938,  0.111], radius=0.05)
+    plt.show()
 
 def plot_cylinders(joint_angles):
     cylinder0 = Cylinder([0, 0, 0], [0, 0, 0.2], 0.05)
@@ -231,17 +271,20 @@ def plot_cylinders(joint_angles):
     plot_cylinder(ax, cylinder5)
     plot_cylinder(ax, cylinder6)
     plot_cylinder(ax, cylinder7)
-
+    
     # plot_cylinder(ax, [0.00823718, 0.19858176, 0.31871104],  [-0.09051886,  0.06896938,  0.111], radius=0.05)
     plt.show()
 
 if __name__ == '__main__':
     joint_angles = [53.856, -55.162, -30.889, -105.960, -90.846, -156.482]
     joint_angles = [-112.946, -55.333, -38.871, -30.372, -31.192, 19.329]
+    joint_angles = [-94.773, -38.358, 27.718, -81.775, -90.109, 109.984]
+
     # joint_angles = [0, 0, 0, 0, 0, 0]
     # joint_angles[1] -= 180.0
     # joint_angles[1] = 0
     # joint_angles = [53.856, -5, -30.889, -105.960, -90.846, -156.482]
     joint_angles = [angle * np.pi / 180 for angle in joint_angles]
-
-    plot_cylinders(joint_angles)
+    box1 = Box([0.20, -0.32, 0.165], [0.15, 0.075, 0.355])
+    boxes = [box1]
+    plot_cylinders_and_boxes(joint_angles, boxes)

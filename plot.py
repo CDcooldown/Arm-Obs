@@ -40,6 +40,35 @@ def plot_cylinder(ax, cylinder, resolution=30):
     
     ax.add_collection3d(Poly3DCollection(verts, alpha=0.6, facecolor='blue'))
 
+def plot_box(ax, box):
+    center = box.center
+    size = box.size
+    # 计算八个顶点
+    dx, dy, dz = size / 2
+    corners = np.array([
+        [-dx, -dy, -dz],
+        [ dx, -dy, -dz],
+        [ dx,  dy, -dz],
+        [-dx,  dy, -dz],
+        [-dx, -dy,  dz],
+        [ dx, -dy,  dz],
+        [ dx,  dy,  dz],
+        [-dx,  dy,  dz]
+    ])
+    corners += center  # 平移到中心
+
+    # 定义每个面由四个顶点组成
+    faces = [
+        [corners[0], corners[1], corners[2], corners[3]],  # bottom
+        [corners[4], corners[5], corners[6], corners[7]],  # top
+        [corners[0], corners[1], corners[5], corners[4]],  # front
+        [corners[2], corners[3], corners[7], corners[6]],  # back
+        [corners[1], corners[2], corners[6], corners[5]],  # right
+        [corners[0], corners[3], corners[7], corners[4]]   # left
+    ]
+
+    ax.add_collection3d(Poly3DCollection(faces, alpha=0.6, facecolor='orange'))
+
 # if __name__ == '__main__':
 
 #     # 使用
